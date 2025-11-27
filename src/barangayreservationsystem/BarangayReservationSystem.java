@@ -12,108 +12,158 @@ package barangayreservationsystem;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
 
 public class BarangayReservationSystem {
-
-    private static CardLayout cardLayout;
-    private static JPanel mainPanel;
-
     public static void main(String[] args) {
+        SwingUtilities.invokeLater(LoginFrame::new);
+    }
+}
 
-        JFrame frame = new JFrame("Login / Sign Up App");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+class LoginFrame extends JFrame {
 
-        frame.setSize(350, 250);      // NORMAL window size
-        frame.setResizable(false);    // prevent huge resizing
-        frame.setLocationRelativeTo(null);
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JButton loginButton;
+    private JButton registerButton;
 
-        cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
+    private static final String FILE_PATH = "user.txt";
 
-        mainPanel.add(loginPanel(), "login");
-        mainPanel.add(signUpPanel(), "signup");
-        mainPanel.add(homePanel(), "home");
+    public LoginFrame() {
 
-        frame.add(mainPanel);
-        frame.setVisible(true);
+        setTitle("Login");
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // Full screen
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // ===== HUGE FONTS =====
+        Font labelFont = new Font("Arial", Font.BOLD, 35);
+        Font fieldFont = new Font("Arial", Font.PLAIN, 32);
+        Font buttonFont = new Font("Arial", Font.BOLD, 30);
+
+        usernameField = new JTextField();
+        passwordField = new JPasswordField();
+
+        // ===== HUGE FIELDS =====
+        usernameField.setPreferredSize(new Dimension(450, 60));
+        passwordField.setPreferredSize(new Dimension(450, 60));
+
+        usernameField.setFont(fieldFont);
+        passwordField.setFont(fieldFont);
+
+        // ===== HUGE BUTTONS =====
+        loginButton = new JButton("LOGIN");
+        registerButton = new JButton("SIGNUP");
+
+        loginButton.setPreferredSize(new Dimension(230, 65));
+        registerButton.setPreferredSize(new Dimension(230, 65));
+
+        loginButton.setFont(buttonFont);
+        registerButton.setFont(buttonFont);
+
+        JLabel userLabel = new JLabel("Username:");
+        JLabel passLabel = new JLabel("Password:");
+
+        userLabel.setFont(labelFont);
+        passLabel.setFont(labelFont);
+
+        // ===== MASSIVE CARD PANEL =====
+        JPanel cardPanel = new JPanel(new GridBagLayout());
+        cardPanel.setPreferredSize(new Dimension(900, 600));
+        cardPanel.setBackground(new Color(245, 245, 245));
+        cardPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 5));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(25, 25, 25, 25);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridx = 0; gbc.gridy = 0;
+        cardPanel.add(userLabel, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 0;
+        cardPanel.add(usernameField, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1;
+        cardPanel.add(passLabel, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 1;
+        cardPanel.add(passwordField, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 2;
+        cardPanel.add(loginButton, gbc);
+
+        gbc.gridx = 1; gbc.gridy = 2;
+        cardPanel.add(registerButton, gbc);
+
+        // ===== CENTER PANEL =====
+        JPanel container = new JPanel(new GridBagLayout());
+        container.add(cardPanel);
+
+        add(container);
+
+        loginButton.addActionListener(new LoginButtonListener());
+        registerButton.addActionListener(new RegisterButtonListener());
+
+        setVisible(true);
     }
 
-    // ---------------- LOGIN PANEL ----------------
-    private static JPanel loginPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    // ---------------- LOGIN BUTTON ----------------
+    private class LoginButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
 
-        JLabel title = new JLabel("Log In", SwingConstants.CENTER);
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+            String username = usernameField.getText();
+            String password = new String(passwordField.getPassword());
 
-        JTextField user = new JTextField(12);   // small size
-        JPasswordField pass = new JPasswordField(12);
-
-        JButton loginBtn = new JButton("Login");
-        loginBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JButton goSignUp = new JButton("Go to Sign Up");
-        goSignUp.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(title);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(user);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(pass);
-        panel.add(Box.createVerticalStrut(15));
-        panel.add(loginBtn);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(goSignUp);
-
-        loginBtn.addActionListener(e -> cardLayout.show(mainPanel, "home"));
-        goSignUp.addActionListener(e -> cardLayout.show(mainPanel, "signup"));
-
-        return panel;
+            if (validateLogin(username, password)) {
+                JOptionPane.showMessageDialog(LoginFrame.this, "Login Successful!");
+            } else {
+                JOptionPane.showMessageDialog(LoginFrame.this, "Invalid Username or Password");
+            }
+        }
     }
 
-    // ---------------- SIGN UP PANEL ----------------
-    private static JPanel signUpPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    // ---------------- REGISTER BUTTON ----------------
+    private class RegisterButtonListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
 
-        JLabel title = new JLabel("Sign Up", SwingConstants.CENTER);
-        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+            String username = usernameField.getText();
+            String password = new String(passwordField.getPassword());
 
-        JTextField newUser = new JTextField(12);
-        JPasswordField newPass = new JPasswordField(12);
-
-        JButton signUpBtn = new JButton("Create Account");
-        signUpBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        JButton backToLogin = new JButton("Back to Log In");
-        backToLogin.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(title);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(newUser);
-        panel.add(Box.createVerticalStrut(10));
-        panel.add(newPass);
-        panel.add(Box.createVerticalStrut(15));
-        panel.add(signUpBtn);
-        panel.add(Box.createVerticalStrut(5));
-        panel.add(backToLogin);
-
-        signUpBtn.addActionListener(e -> cardLayout.show(mainPanel, "home"));
-        backToLogin.addActionListener(e -> cardLayout.show(mainPanel, "login"));
-
-        return panel;
+            if (registerUser(username, password)) {
+                JOptionPane.showMessageDialog(LoginFrame.this, "Registration Successful!");
+            } else {
+                JOptionPane.showMessageDialog(LoginFrame.this, "Error: Could not register.");
+            }
+        }
     }
 
-    // ---------------- HOME PANEL ----------------
-    private static JPanel homePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
+    // ---------------- CHECK LOGIN ----------------
+    private boolean validateLogin(String username, String password) {
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(";");
+                if (parts.length == 2 && parts[0].equals(username) && parts[1].equals(password)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("No user file found. Register first.");
+        }
+        return false;
+    }
 
-        JLabel homeText = new JLabel("Welcome to Home Page!", SwingConstants.CENTER);
-        homeText.setFont(new Font("Arial", Font.BOLD, 16));
-
-        panel.add(homeText, BorderLayout.CENTER);
-        return panel;
+    // ---------------- REGISTER USER ----------------
+    private boolean registerUser(String username, String password) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
+            bw.write(username + ";" + password);
+            bw.newLine();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }
