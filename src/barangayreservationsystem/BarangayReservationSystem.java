@@ -21,7 +21,6 @@ import java.util.LinkedList;
 import java.util.Stack;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.Collections;
 
 public class BarangayReservationSystem {
     public static void main(String[] args) {
@@ -416,27 +415,6 @@ class ReservationStore {
         saveToFile();
     }
 
-    public synchronized List<Reservation> linearSearch(String q) {
-        List<Reservation> out = new ArrayList<>();
-        String low = q.toLowerCase();
-        for (Reservation r : list) if (r.name.toLowerCase().contains(low)) out.add(r);
-        return out;
-    }
-
-    public synchronized int binarySearchByName(String name) {
-        if (!isSortedByName) return -2;
-        int low = 0, high = list.size() - 1;
-        while (low <= high) {
-            int mid = (low + high) / 2;
-            String midName = list.get(mid).name.toLowerCase();
-            int cmp = midName.compareTo(name.toLowerCase());
-            if (cmp == 0) return mid;
-            else if (cmp < 0) low = mid + 1;
-            else high = mid - 1;
-        }
-        return -1;
-    }
-
     public synchronized List<Reservation> snapshot() {
         return new ArrayList<>(list);
     }
@@ -699,13 +677,10 @@ class ReservationFormDialog extends JDialog {
         add(form, BorderLayout.CENTER);
         add(btnPanel, BorderLayout.SOUTH);
 
-        //TYPE CHANGE LISTENER
         typeCombo.addActionListener(e -> updateDetailsDropdown());
 
-        // initialize details dropdown visibility/content
         updateDetailsDropdown();
 
-        //BUTTON ACTIONS
         cancelBtn.addActionListener(e -> dispose());
 
         // create reservation 
@@ -778,7 +753,7 @@ class RecordsPage extends JFrame {
     public RecordsPage(JFrame parent) {
         super("Reservation Records");
 
-        // 80% FULL SCREEN 
+        // SCREEN 
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         int width = (int) (screen.width * 0.80);
         int height = (int) (screen.height * 0.80);
@@ -812,7 +787,7 @@ class RecordsPage extends JFrame {
         c.gridx = 3; c.gridy = 0; c.weightx = 0.4;
         controls.add(searchField, c);
 
-        // Buttons row (big)
+        // Buttons row
         Font btnFont = new Font("Arial", Font.BOLD, 18);
         Dimension bigBtn = new Dimension(240, 56);
 
@@ -831,20 +806,19 @@ class RecordsPage extends JFrame {
         undoBtn.setFont(btnFont); undoBtn.setPreferredSize(bigBtn);
         JButton countsBtn = new JButton("Category Counts");
         countsBtn.setFont(btnFont); countsBtn.setPreferredSize(bigBtn);
-        JButton exportBtn = new JButton("Export CSV");
-        exportBtn.setFont(btnFont); exportBtn.setPreferredSize(bigBtn);
 
-        JPanel btnPanel = new JPanel(new GridLayout(2, 5, 12, 12));
+        // ⚠️ CSV BUTTON REMOVED HERE
+
+        JPanel btnPanel = new JPanel(new GridLayout(2, 4, 12, 12));
 
         btnPanel.add(sortByNameBtn);
         btnPanel.add(sortByDateBtn);
         btnPanel.add(refreshBtn);
-
         btnPanel.add(viewDetailsBtn);
         btnPanel.add(deleteBtn);
         btnPanel.add(undoBtn);
         btnPanel.add(countsBtn);
-        btnPanel.add(exportBtn);
+        // ⚠️ exportBtn removed — NO LONGER ADDED
 
         c.gridx = 0; c.gridy = 1; c.gridwidth = 4; c.weightx = 1;
         controls.add(btnPanel, c);
@@ -852,16 +826,15 @@ class RecordsPage extends JFrame {
         add(controls, BorderLayout.NORTH);
 
         // TABLE 
-        String[] cols = {"ID", "Type", "Name", "Date", "Time", "Purpose", "Return Date", "Return Time"};
+        String[] cols = {"ID", "Type", "Name", "Date", "Time"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
         };
         table = new JTable(model);
-        // make table easy to read
+
         table.setFont(new Font("Arial", Font.PLAIN, 20));
         table.setRowHeight(42);
         table.setFillsViewportHeight(true);
-        table.setAutoCreateRowSorter(false); 
 
         table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 18));
         table.getTableHeader().setPreferredSize(new Dimension(table.getTableHeader().getWidth(), 38));
@@ -874,14 +847,14 @@ class RecordsPage extends JFrame {
 
         TableColumnModel colModel = table.getColumnModel();
         if (colModel.getColumnCount() >= 8) {
-            colModel.getColumn(0).setPreferredWidth(120);  // ID
-            colModel.getColumn(1).setPreferredWidth(260);  // Type
-            colModel.getColumn(2).setPreferredWidth(260);  // Name
-            colModel.getColumn(3).setPreferredWidth(140);  // Date
-            colModel.getColumn(4).setPreferredWidth(110);  // Time
-            colModel.getColumn(5).setPreferredWidth(320);  // Purpose
-            colModel.getColumn(6).setPreferredWidth(140);  // Return Date
-            colModel.getColumn(7).setPreferredWidth(120);  // Return Time
+            colModel.getColumn(0).setPreferredWidth(120);
+            colModel.getColumn(1).setPreferredWidth(260);
+            colModel.getColumn(2).setPreferredWidth(260);
+            colModel.getColumn(3).setPreferredWidth(140);
+            colModel.getColumn(4).setPreferredWidth(110);
+            colModel.getColumn(5).setPreferredWidth(320);
+            colModel.getColumn(6).setPreferredWidth(140);
+            colModel.getColumn(7).setPreferredWidth(120);
         }
 
         // filter by type
@@ -891,7 +864,6 @@ class RecordsPage extends JFrame {
             if (!"All".equals(sel)) {
                 List<Reservation> filtered = new ArrayList<>();
                 for (Reservation r : s) {
-                    
                     if (sel.equals(r.type) || r.type.startsWith(sel + " ")) filtered.add(r);
                 }
                 refreshTable(filtered);
@@ -907,7 +879,7 @@ class RecordsPage extends JFrame {
             refreshTable(store.snapshot());
         });
 
-        // SEARCH
+        // search
         searchField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
@@ -935,7 +907,7 @@ class RecordsPage extends JFrame {
             JOptionPane.showMessageDialog(this, "Sorted by name.");
         });
 
-        // sort by date 
+        // sort by date
         sortByDateBtn.addActionListener(e -> {
             store.bubbleSort("date");
             refreshTable(store.snapshot());
@@ -950,7 +922,6 @@ class RecordsPage extends JFrame {
             Reservation r = store.byId.get(id);
             if (r == null) { JOptionPane.showMessageDialog(this, "Reservation not found."); return; }
 
-            // build details
             StringBuilder sb = new StringBuilder();
             sb.append("ID: ").append(r.id).append("\n");
             sb.append("Type: ").append(r.type).append("\n");
@@ -964,11 +935,11 @@ class RecordsPage extends JFrame {
             JTextArea ta = new JTextArea(sb.toString());
             ta.setFont(new Font("Arial", Font.PLAIN, 18));
             ta.setEditable(false);
-            ta.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
+
             JOptionPane.showMessageDialog(this, new JScrollPane(ta), "Reservation Details", JOptionPane.INFORMATION_MESSAGE);
         });
 
-        // DeleteSelected
+        // delete
         deleteBtn.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) { JOptionPane.showMessageDialog(this, "Select a row to delete."); return; }
@@ -981,14 +952,14 @@ class RecordsPage extends JFrame {
             }
         });
 
-        //undo
+        // undo
         undoBtn.addActionListener(e -> {
             boolean ok = store.undoLast();
             JOptionPane.showMessageDialog(this, ok ? "Undo successful." : "Nothing to undo.");
             refreshTable(store.snapshot());
         });
 
-        //category counts
+        // category counts
         countsBtn.addActionListener(e -> {
             Map<String, Integer> map = store.getCategoryCounts();
             StringBuilder sb = new StringBuilder();
@@ -997,53 +968,17 @@ class RecordsPage extends JFrame {
             JOptionPane.showMessageDialog(this, sb.toString(), "Category Counts", JOptionPane.INFORMATION_MESSAGE);
         });
 
-        //CSV
-        exportBtn.addActionListener(e -> {
-            try {
-                File out = new File("reservations_export.csv");
-                try (BufferedWriter bw = new BufferedWriter(new FileWriter(out))) {
-                    // header (added Return Date/Return Time)
-                    bw.write("ID,Type,Name,Date,Time,Purpose,Return Date,Return Time");
-                    bw.newLine();
-                    for (int i = 0; i < model.getRowCount(); i++) {
-                        String line = escapeCsv((String)model.getValueAt(i,0)) + "," +
-                                      escapeCsv((String)model.getValueAt(i,1)) + "," +
-                                      escapeCsv((String)model.getValueAt(i,2)) + "," +
-                                      escapeCsv((String)model.getValueAt(i,3)) + "," +
-                                      escapeCsv((String)model.getValueAt(i,4)) + "," +
-                                      escapeCsv((String)model.getValueAt(i,5)) + "," +
-                                      escapeCsv((String)model.getValueAt(i,6)) + "," +
-                                      escapeCsv((String)model.getValueAt(i,7));
-                        bw.write(line);
-                        bw.newLine();
-                    }
-                }
-                JOptionPane.showMessageDialog(this, "Exported to reservations_export.csv");
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Export failed: " + ex.getMessage());
-            }
-        });
-
         setVisible(true);
-    }
-
-    private static String escapeCsv(String s) {
-        if (s == null) return "";
-        // escape quotes and wrap if needed
-        if (s.contains(",") || s.contains("\"") || s.contains("\n")) {
-            return "\"" + s.replace("\"", "\"\"") + "\"";
-        }
-        return s;
     }
 
     private void refreshTable(List<Reservation> list) {
         model.setRowCount(0);
         for (Reservation r : list) {
-            // ensure we add exactly 8 columns (some reservations from old format may have empty return fields)
-            String retD = r.returnDate == null ? "" : r.returnDate;
-            String retT = r.returnTime == null ? "" : r.returnTime;
-            model.addRow(new Object[]{r.id, r.type, r.name, r.date, r.time, r.purpose, retD, retT});
+            model.addRow(new Object[]{
+                r.id, r.type, r.name, r.date, r.time, r.purpose,
+                r.returnDate, r.returnTime
+            });
         }
     }
 }
+
