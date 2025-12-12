@@ -139,7 +139,7 @@ class LoginFrame extends JFrame {
     }
 
 
-    //LOGIN BUTTON
+   //login
     private class LoginButtonListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
